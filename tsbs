@@ -1,0 +1,42 @@
+#!/bin/bash
+usage(){
+  >&2 echo "Usage: tsbs <PROJECT>"
+  return 0
+}
+pname=$1
+pdir="./${pname}"
+tdir="/var/tsbs/templates"
+present="$PWD"
+if [ -z "$pname" ] ; then
+  usage
+  exit 1
+elif ! [ -d "$tdir" ] ; then
+  >&2 echo "No Template directory found at ${tdir}"
+  exit 2
+elif [ -d "$pname" ] ; then
+  >&2 echo "Project Directory already exists"
+  exit 3
+fi
+mkdir "$pname"
+cd "$tdir"
+echo "Please Select a Template out of the following:"
+select x in * ; do
+  template="$x"
+  break
+done
+cd "$present"
+cp -R "${tdir}/${template}/." "$pdir"
+cd "$pdir"
+for x in *; do
+  new=$(sed "s,PROJECTNAME,${pname},g" <<< "$x")
+  if [ "$x" = "$new" ]; then
+    sed "s,PROJECTNAME,${pname},g" < $x > temp
+    mv -f temp "$x"
+  else
+    sed "s,PROJECTNAME,${pname},g" < $x > $new
+    if [ -e "$new" ]; then
+      rm -rf "$x"
+    fi
+  fi
+done
+
